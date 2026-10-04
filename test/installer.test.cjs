@@ -102,4 +102,10 @@ test('the complete bundled runtime is valid JavaScript and has embedded CSS/font
   assert.match(source, /data:font\/ttf;base64/);
   assert.match(source, /SIL OPEN FONT LICENSE/);
   assert.doesNotMatch(source, /__GEMINI_CSS__/);
+
+  const softSource = theme.runtime(undefined, 'theme/gemini-soft-minimal.css');
+  new vm.Script(softSource);
+  assert.match(softSource, /Balsamiq\+Sans/);
+  assert.match(softSource, /#FFFBEF/);
 });
+

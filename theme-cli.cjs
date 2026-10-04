@@ -73,10 +73,11 @@ function encodeArchive(header, files, changed = new Set()) {
   return Buffer.concat([prefix, encoded, Buffer.alloc(padding), ...packed]);
 }
 
-function runtime(root = __dirname) {
+function runtime(root = __dirname, cssFile = 'theme/gemini.css') {
   const font = fs.readFileSync(path.join(root, 'assets/fonts/google-sans-flex.ttf')).toString('base64');
   const license = fs.readFileSync(path.join(root, 'assets/fonts/OFL.txt'), 'utf8');
-  const css = "@font-face{font-family:'Gemini UI';font-style:normal;font-weight:400 600;font-display:swap;src:url(data:font/ttf;base64," + font + ") format('truetype');}\n" + fs.readFileSync(path.join(root, 'theme/gemini.css'), 'utf8');
+  const cssPath = path.isAbsolute(cssFile) ? cssFile : path.join(root, cssFile);
+  const css = "@font-face{font-family:'Gemini UI';font-style:normal;font-weight:400 600;font-display:swap;src:url(data:font/ttf;base64," + font + ") format('truetype');}\n" + fs.readFileSync(cssPath, 'utf8');
   const source = fs.readFileSync(path.join(root, 'theme/enhance.js'), 'utf8');
   if (source.split('__GEMINI_CSS__').length !== 2) throw new Error('Theme runtime must have one CSS placeholder.');
   return '\n' + MARKER + '\n/* Bundled font license:\n' + license.replaceAll('*/', '* /') + '\n*/\n' + source.replace('__GEMINI_CSS__', () => JSON.stringify(css));
@@ -187,16 +188,19 @@ function cli(args) {
   if (!['status','install','restore'].includes(command)) throw new Error('Unknown command: ' + command);
   let archive = process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Programs/antigravity/resources/app.asar') : null;
   let dryRun = false;
+  let cssFile = 'theme/gemini.css';
   while (args.length) {
     const option = args.shift();
     if (option === '--archive' && args[0] && !args[0].startsWith('--')) archive = args.shift();
+    else if (option === '--css' && args[0] && !args[0].startsWith('--')) cssFile = args.shift();
     else if (option === '--dry-run' && command === 'install') dryRun = true;
     else throw new Error('Unknown or incomplete option: ' + option);
   }
   if (!archive) throw new Error('Set --archive to the installed app.asar path.');
   archive = path.resolve(archive);
   if (command !== 'status' && !dryRun) requireClosedApp();
-  const result = command === 'status' ? status(archive) : command === 'install' ? install(archive, {dryRun}) : restore(archive);
+  const source = runtime(__dirname, cssFile);
+  const result = command === 'status' ? status(archive) : command === 'install' ? install(archive, {dryRun, source}) : restore(archive);
   console.log(JSON.stringify(result, null, 2));
 }
 

@@ -3,6 +3,28 @@
   if (globalThis.__antigravityGeminiStyleV3) return;
   globalThis.__antigravityGeminiStyleV3 = true;
   const css = __GEMINI_CSS__;
+  const GREETINGS = [
+    "¿Qué rompemos hoy con estilo? (¬‿¬)",
+    "Tranqui, esta vez compila a la primera (˶ᵔ ᵕ ᵔ˶)",
+    "Tú pon la idea, yo la lógica (੭ˊᵕˋ)੭",
+    "Prometo no meter bugs sin avisar (｡•́‿•̀｡)",
+    "¿Listo para otro día de fe en el código? (๑•̀ㅂ•́)و",
+    "Todo bajo control... creo (・_・;)",
+    "Un refactor chiquito y nos vamos ( ˘͈ ᵕ ˘͈ )",
+    "Dime qué inventamos hoy (｡•̀ᴗ-)✧",
+    "En mi máquina funcionaba, lo juro ¯\\_(ツ)_/¯",
+    "A ver qué magia linda sale hoy (ﾉ◕ヮ◕)ﾉ",
+    "No toques nada que ya está funcionando (；・∀・)",
+    "Hoy programamos en modo pro ( •_•)>⌐■-■",
+    "¿Hacemos algo épico o solo un parche? (¬_¬ )",
+    "Respira hondo, el linter no muerde ( ˘⊖˘ )",
+    "Llegó la hora de crear cosas geniales ( ˶• ֊ •˶ )",
+    "Si no hay bugs raros, no hay emoción ( ﾟДﾟ)",
+    "¿Qué arquitectura improvisamos hoy? ( ˘o˘ )",
+    "El código está limpio, créeme ( ˘‿˘ )",
+    "Un commit más y cerramos el día (*¯︶¯*)",
+    "Dale, cuéntame el plan maestro (・_・ )"
+  ];
   const workspace = { open: false, plus: null, project: null, environment: null, panel: null };
   function closeWorkspace(restoreFocus = false) {
     // Dismiss child popups through their native handler before hiding the anchor.
@@ -116,11 +138,56 @@
         if (element.getAttribute('data-gemini-expanded') !== flag) element.setAttribute('data-gemini-expanded', flag);
       }
       const top = sidebar.firstElementChild;
-      if (top && !top.querySelector('.gemini-antigravity-brand')) {
-        const brand = document.createElement('span');
-        brand.className = 'gemini-antigravity-brand';
-        brand.textContent = 'Antigravity';
-        top.append(brand);
+      if (top) {
+        top.querySelector('.gemini-antigravity-brand')?.remove();
+      }
+
+      function setupActionBtn(btn, titleText, iconSvg) {
+        if (!btn) return;
+        btn.setAttribute('title', titleText);
+        btn.setAttribute('aria-label', titleText);
+        let svg = btn.querySelector('svg');
+        if (!svg) {
+          btn.insertAdjacentHTML('afterbegin', iconSvg);
+          svg = btn.querySelector('svg');
+        }
+        if (svg) {
+          svg.classList.add('gemini-action-icon');
+          svg.setAttribute('aria-hidden', 'true');
+        }
+        for (const node of [...btn.childNodes]) {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            const span = document.createElement('span');
+            span.className = 'gemini-hidden-text';
+            span.textContent = node.textContent;
+            node.replaceWith(span);
+          } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'svg' && !node.contains(svg)) {
+            node.classList.add('gemini-hidden-text');
+          }
+        }
+      }
+
+      const newBtn = sidebar.querySelector('[data-testid="new-conversation-button"]');
+      const histBtn = sidebar.querySelector('[data-testid="history-button"]');
+      const autoBtn = sidebar.querySelector('[data-testid="automations-button"]');
+
+      setupActionBtn(newBtn, 'Nueva conversación', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>');
+      setupActionBtn(histBtn, 'Historial de conversaciones', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>');
+      setupActionBtn(autoBtn, 'Tareas programadas', '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3" ry="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>');
+
+      if (newBtn && (histBtn || autoBtn)) {
+        let row = sidebar.querySelector('.gemini-sidebar-actions-row');
+        if (!row) {
+          row = document.createElement('div');
+          row.className = 'gemini-sidebar-actions-row';
+          const parent = newBtn.parentElement;
+          if (parent) parent.insertBefore(row, newBtn);
+        }
+        if (row) {
+          if (!row.contains(newBtn)) row.append(newBtn);
+          if (histBtn && !row.contains(histBtn)) row.append(histBtn);
+          if (autoBtn && !row.contains(autoBtn)) row.append(autoBtn);
+        }
       }
     }
     const toggle = [...document.querySelectorAll('[data-testid="sidebar-toggle"]')].find(element => !element.closest('[data-aux-pane-open]'));
@@ -142,6 +209,10 @@
     mark(picker, 'title', selected);
     for (const panel of document.querySelectorAll('[data-testid="model-selector-panel"]')) {
       mark(panel.closest('[role="menu"]'), 'data-gemini-model-menu');
+      const header = panel.querySelector('[data-testid="model-selector-header"]');
+      if (header && header.textContent !== 'Modelos disponibles ( ˘͈ ᵕ ˘͈ )') {
+        header.textContent = 'Modelos disponibles ( ˘͈ ᵕ ˘͈ )';
+      }
       for (const row of panel.querySelectorAll('[role="menuitem"]')) {
         const label = row.querySelector('[data-model-base]')?.getAttribute('data-model-base') || row.getAttribute('data-model-label');
         if (!label) continue;
@@ -149,14 +220,39 @@
         const effort = content?.querySelector('span:nth-child(2)')?.textContent?.trim();
         const badge = content?.querySelector('[data-tooltip-id]');
         const fast = badge?.textContent?.trim() === 'Fast';
-        if (fast) mark(badge, 'data-gemini-fast');
+        if (fast) {
+          mark(badge, 'data-gemini-fast');
+          badge.textContent = 'Turbo ( ﾟヮﾟ)';
+        }
         let description = row.querySelector('.gemini-model-description');
         if (!description) {
           description = document.createElement('span');
           description.className = 'gemini-model-description';
           row.append(description);
         }
-        let detail = effort ? `${effort} thinking${fast ? ' · Fast' : ''}` : label.includes('Thinking') ? 'Thinking model' : label.includes('Medium') ? 'Medium reasoning' : 'Coding model';
+        let detail = '';
+        if (effort) {
+          const effortLower = effort.toLowerCase();
+          if (effortLower.includes('high') || effortLower.includes('max')) {
+            detail = `Razonamiento nivel galaxia ( ˘ω˘ )${fast ? ' · Turbo' : ''}`;
+          } else if (effortLower.includes('medium')) {
+            detail = `Razonamiento equilibrado (・ω・)${fast ? ' · Turbo' : ''}`;
+          } else if (effortLower.includes('low')) {
+            detail = `Razonamiento ágil (｡•̀ᴗ-)✧${fast ? ' · Turbo' : ''}`;
+          } else {
+            detail = `${effort} pensando ( ˘͈ ᵕ ˘͈ )${fast ? ' · Turbo' : ''}`;
+          }
+        } else if (label.includes('Thinking')) {
+          detail = 'Modo pensativo profundo ( ˘ω˘ )';
+        } else if (label.includes('Medium')) {
+          detail = 'Razonamiento equilibrado (・ω・)';
+        } else if (label.includes('Flash')) {
+          detail = 'Rápido y ligero (｡•̀ᴗ-)✧';
+        } else if (label.includes('Pro')) {
+          detail = 'Potente para tareas complejas (๑•̀ㅂ•́)و';
+        } else {
+          detail = 'Modelo de desarrollo ( ˶• ֊ •˶ )';
+        }
         if (description.textContent !== detail) description.textContent = detail;
         mark(row, 'data-gemini-model-row');
         mark(row, 'data-gemini-selected', String(selected === label || selected.startsWith(label + ' ')));
@@ -166,6 +262,35 @@
     mark(document.querySelector('input[placeholder*="Search conversations"]')?.parentElement, 'data-gemini-history-search');
     for (const toolbar of document.querySelectorAll('[data-testid="cascade-system-message-toolbar"]')) {
       mark(toolbar.parentElement?.parentElement, 'data-gemini-response-actions-wrap');
+      const goodBtn = toolbar.querySelector('[aria-label*="Good response"], [aria-label*="buena"]');
+      if (goodBtn && goodBtn.getAttribute('title') !== 'Quedó de diez (•̀ᴗ•́)و') {
+        goodBtn.setAttribute('title', 'Quedó de diez (•̀ᴗ•́)و');
+        goodBtn.setAttribute('aria-label', 'Quedó de diez (•̀ᴗ•́)و');
+      }
+      const badBtn = toolbar.querySelector('[aria-label*="Bad response"], [aria-label*="mala"]');
+      if (badBtn && badBtn.getAttribute('title') !== 'Casi, pero necesita ajuste (¬_¬ )') {
+        badBtn.setAttribute('title', 'Casi, pero necesita ajuste (¬_¬ )');
+        badBtn.setAttribute('aria-label', 'Casi, pero necesita ajuste (¬_¬ )');
+      }
+      const copyBtn = toolbar.querySelector('[aria-label*="Copy"], [aria-label*="copiar"]');
+      if (copyBtn && copyBtn.getAttribute('title') !== 'Copiar respuesta (*¯︶¯*)') {
+        copyBtn.setAttribute('title', 'Copiar respuesta (*¯︶¯*)');
+        copyBtn.setAttribute('aria-label', 'Copiar respuesta (*¯︶¯*)');
+      }
+    }
+    const settingsBtn = document.querySelector('[data-testid="settings-button"]');
+    if (settingsBtn && settingsBtn.getAttribute('title') !== 'Ajustes ( ˶• ֊ •˶ )') {
+      settingsBtn.setAttribute('title', 'Ajustes ( ˶• ֊ •˶ )');
+      settingsBtn.setAttribute('aria-label', 'Ajustes ( ˶• ֊ •˶ )');
+    }
+    for (const inputEl of document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"])')) {
+      const ph = inputEl.placeholder;
+      if (!ph) continue;
+      if (/search conversation/i.test(ph) && ph !== 'Buscar charlas ( ˶• ֊ •˶ )') {
+        inputEl.placeholder = 'Buscar charlas ( ˶• ֊ •˶ )';
+      } else if (/search|filter/i.test(ph) && !ph.includes('(')) {
+        inputEl.placeholder = 'Buscar... ( ˶• ֊ •˶ )';
+      }
     }
     for (const body of document.querySelectorAll('[role="article"][aria-label="Agent response"] .md-divider-spacing')) {
       mark(body, 'data-gemini-response-body');
@@ -194,25 +319,62 @@
     const controls = [...(surface?.children || [])].find(element => element.querySelector('[aria-label="Add context"]'));
     mark(controls, 'data-gemini-composer-controls');
     mark(controls?.querySelector('[aria-label="Add context"]')?.parentElement, 'data-gemini-context-cluster');
+    const contextBtn = controls?.querySelector('[aria-label="Add context"]');
+    if (contextBtn && contextBtn.getAttribute('title') !== 'Añadir contexto (｡•̀ᴗ-)✧') {
+      contextBtn.setAttribute('title', 'Añadir contexto (｡•̀ᴗ-)✧');
+      contextBtn.setAttribute('aria-label', 'Añadir contexto (｡•̀ᴗ-)✧');
+    }
+    const voiceBtn = controls?.querySelector('[aria-label="Record voice memo"]');
+    if (voiceBtn && voiceBtn.getAttribute('title') !== 'Grabar nota de voz ( ˘͈ ᵕ ˘͈ )') {
+      voiceBtn.setAttribute('title', 'Grabar nota de voz ( ˘͈ ᵕ ˘͈ )');
+      voiceBtn.setAttribute('aria-label', 'Grabar nota de voz ( ˘͈ ᵕ ˘͈ )');
+    }
+    const sendBtn = document.querySelector('[data-testid="send-button"]');
+    if (sendBtn && sendBtn.getAttribute('title') !== 'Enviar mensaje (੭ˊᵕˋ)੭') {
+      sendBtn.setAttribute('title', 'Enviar mensaje (੭ˊᵕˋ)੭');
+      sendBtn.setAttribute('aria-label', 'Enviar mensaje (੭ˊᵕˋ)੭');
+    }
     const project = document.querySelector('[data-testid="project-selector-trigger"]')?.closest('.relative.w-full');
     const environment = document.querySelector('[aria-label="Select Environment"]')?.parentElement?.parentElement;
     annotateWorkspace(controls?.querySelector('[aria-label="Add context"]'), project, environment);
+    const searchInput = document.querySelector('input[placeholder*="Search conversations"]');
+    if (searchInput && searchInput.placeholder !== 'Buscar charlas ( ˶• ֊ •˶ )') {
+      searchInput.placeholder = 'Buscar charlas ( ˶• ֊ •˶ )';
+    }
     const placeholder = input.nextElementSibling;
-    if (placeholder?.tagName === 'P' && placeholder.textContent !== 'Ask Antigravity') {
-      mark(input, 'title', 'Ask Antigravity. Use @ to mention context or / for actions.');
-      placeholder.textContent = 'Ask Antigravity';
+    if (placeholder?.tagName === 'P' && placeholder.textContent !== 'Escribe una idea... (˶ᵔ ᵕ ᵔ˶)') {
+      mark(input, 'title', 'Escribe una idea... (˶ᵔ ᵕ ᵔ˶). Usa @ para contexto o / para acciones.');
+      placeholder.textContent = 'Escribe una idea... (˶ᵔ ᵕ ᵔ˶)';
+    }
+    for (const btn of document.querySelectorAll('[data-testid="worked-for-collapsible"], [data-testid="tool-group-collapsible"], [data-testid="thinking-collapsible-trigger"]')) {
+      const span = btn.querySelector('span:not(:empty)') || btn;
+      if (span && span.textContent) {
+        if (/^Worked for\s*(.+)/i.test(span.textContent)) {
+          span.textContent = span.textContent.replace(/^Worked for\s*(.+)/i, 'Listo en $1 (˶ᵔ ᵕ ᵔ˶)');
+        } else if (/^Thinking/i.test(span.textContent)) {
+          span.textContent = 'Pensando... ( ˘͈ ᵕ ˘͈ )';
+        }
+      }
+    }
+    for (const step of document.querySelectorAll('[data-testid="run-command-step"]')) {
+      const title = step.querySelector('.text-sm');
+      if (title && /^Run command/i.test(title.textContent)) {
+        title.textContent = title.textContent.replace(/^Run command/i, 'Ejecutando (๑•̀ㅂ•́)و');
+      }
+    }
+    for (const step of document.querySelectorAll('[data-testid="view-file-step"]')) {
+      const title = step.querySelector('.text-sm');
+      if (title && /^View file/i.test(title.textContent)) {
+        title.textContent = title.textContent.replace(/^View file/i, 'Revisando ( ˶˘꒳˘)');
+      }
     }
     const conversation = input.closest('[data-testid="conversation-view"]');
     if (conversation) {
       const dock = [...conversation.children].find(element => element.contains(box));
       mark(dock, 'data-gemini-conversation-dock');
       mark([...(dock?.children || [])].find(element => element.contains(box)), 'data-gemini-conversation-composer-column');
-      if (dock && !dock.querySelector('.gemini-conversation-note')) {
-        const note = document.createElement('p');
-        note.className = 'gemini-conversation-note';
-        note.textContent = 'AI responses can make mistakes.';
-        dock.append(note);
-      }
+      const note = dock?.querySelector('.gemini-conversation-note');
+      if (note) note.style.display = 'none';
       for (const step of conversation.querySelectorAll('[data-testid="user-input-step"]')) {
         const bubble = [...step.querySelectorAll('[data-testid="lifted-context-menu-trigger"]')].find(element => element.querySelector('[data-quotable="true"]'));
         mark(bubble, 'data-gemini-user-bubble');
@@ -227,7 +389,7 @@
       if (!home.querySelector('.gemini-antigravity-greeting')) {
         const heading = document.createElement('h1');
         heading.className = 'gemini-antigravity-greeting';
-        heading.textContent = 'What will you build?';
+        heading.textContent = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
         home.prepend(heading);
       }
       const column = box?.parentElement?.parentElement?.parentElement;
